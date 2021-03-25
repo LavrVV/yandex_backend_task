@@ -1,0 +1,15 @@
+{
+    "sqltools.connections": [
+        {
+            "previewLimit": 50,
+            "server": "localhost",
+            "port": 5432,
+            "driver": "PostgreSQL",
+            "name": "localhost",
+            "group": "Servers",
+            "database": "yandex_backend_task",
+            "username": "yandex",
+            "password": "123456"
+        }
+    ]
+}

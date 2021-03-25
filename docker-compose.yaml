@@ -1,0 +1,19 @@
+version: '3.3'
+services:
+  web:
+    build: .
+    command: gunicorn yandex_backend_task.wsgi:application --bind 0.0.0.0:8080
+    volumes:
+     - ./application:/code
+    depends_on:
+     - db
+    ports:
+     - "8080:8080"
+    restart: always
+  db:
+    image: "postgres:latest"
+    environment:
+      POSTGRES_PASSWORD: 123456
+      POSTGRES_USER: yandex
+      POSTGRES_DB: yandex_backend_task
+    restart: always
