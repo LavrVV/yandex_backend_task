@@ -123,3 +123,8 @@ dmypy.json
 
 # Pyre type checker
 .pyre/
+
+test_post.py
+try.py
+Вопросы и ответы.pdf
+assignment.pdf
