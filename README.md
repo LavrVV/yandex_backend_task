@@ -241,6 +241,7 @@ ____
 
 - язык программирования `Python 3.6`
 - framework `Django 3.0`
+- база данных `Postgre SQL`
 
 ## Как запустить
 
@@ -248,13 +249,13 @@ ____
 
 Находясь в папке с файлом `docker-compose.yml` выполнить в терминале:
 
-- docker-compose build
-- docker-compose up -d
-- docker-compose exec web python manage.py migrate --noinput
+- `docker-compose build`
+- `docker-compose up -d`
+- `docker-compose exec web python manage.py migrate --noinput` для создания таблиц в базе данных
 
 ### При последующем запуске
 
 Находясь в папке с файлом `docker-compose.yml` выполнить в терминале:
 
-- docker-compose build
-- docker-compose up
+- `docker-compose build`
+- `docker-compose up`

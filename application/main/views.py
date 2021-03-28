@@ -6,6 +6,7 @@ from main import models
 from dateutil.parser import parse
 import json
 
+
 def courier(request, courier_id):
     if request.method == 'PATCH':
         try:
@@ -38,6 +39,7 @@ def courier(request, courier_id):
     else:
         return HttpResponseNotFound()
 
+
 def set_couriers(request):
     if request.method == 'POST':
         data = json.loads(request.body)
@@ -51,14 +53,14 @@ def set_couriers(request):
             except:
                 notok.append({'id': courier['courier_id']})
         if len(notok) > 0:
-            notok = {'validation_error':{'couriers': notok}}
+            notok = {'validation_error': {'couriers': notok}}
             return JsonResponse(notok, status=400, reason='Bad Request')
         else:
-            return JsonResponse({'couriers':ok}, status=201, reason='Created')
+            return JsonResponse({'couriers': ok}, status=201, reason='Created')
     else:
         return HttpResponseNotFound()
-        
-#TODO idempotency
+
+
 def assign_orders(request):
     if request.method == 'POST':
         try:
@@ -74,7 +76,7 @@ def assign_orders(request):
     else:
         return HttpResponseNotFound()
 
-#TODO idempotency
+
 def complete_order(request):
     if request.method == 'POST':
         try:
@@ -88,7 +90,8 @@ def complete_order(request):
             return HttpResponseBadRequest()
     else:
         return HttpResponseNotFound()
-    
+
+
 def orders(request):
     if request.method == 'POST':
         data = json.loads(request.body)
@@ -102,9 +105,9 @@ def orders(request):
             except:
                 notok.append({'id': order['order_id']})
         if len(notok) > 0:
-            notok = {'validation_error':{'orders': notok}}
+            notok = {'validation_error': {'orders': notok}}
             return JsonResponse(notok, status=400, reason='Bad Request')
         else:
-            return JsonResponse({'orders':ok}, status=201, reason='Created')
+            return JsonResponse({'orders': ok}, status=201, reason='Created')
     else:
         return HttpResponseNotFound()

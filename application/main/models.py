@@ -3,6 +3,8 @@ import json
 import re
 import datetime
 # Create your models here.
+
+
 class TimeInterval:
     def __init__(self, s) -> None:
         if re.match(r'^\d{2}:\d{2}-\d{2}:\d{2}$', s):
@@ -13,25 +15,27 @@ class TimeInterval:
             self.hour_end, self.minute_end = t2.split(':')
             self.hour_end = int(self.hour_end)
             self.minute_end = int(self.minute_end)
-            self.delta = (self.hour_end * 60 + self.minute_end) - (self.hour_start * 60 + self.minute_start)
+            self.delta = (self.hour_end * 60 + self.minute_end) - \
+                (self.hour_start * 60 + self.minute_start)
             if self.delta < 0:
                 raise ValueError('wrong_format')
         else:
             raise ValueError('wrong_format')
-    
+
     def intersection(self, other):
         if self.hour_start * 60 + self.minute_start < other.hour_end * 60 + other.minute_end and \
-        self.hour_end * 60 + self.minute_end > other.hour_start * 60 + other.minute_start:
+                self.hour_end * 60 + self.minute_end > other.hour_start * 60 + other.minute_start:
             return True
         else:
             return False
+
 
 class Region(models.Model):
     def __str__(self) -> str:
         return str(self.id)
 
 
-#TODO: weight variable, json_shema, fields settings
+# TODO: weight variable, json_shema, fields settings
 class Courier(models.Model):
     courier_type = models.TextField(default='foot')
     regions = models.ManyToManyField(Region)
@@ -39,24 +43,25 @@ class Courier(models.Model):
     rating = models.FloatField(default=0.0)
     earning = models.IntegerField(default=0)
     current_unfinished_orders = models.IntegerField(default=0)
-    
+
     @classmethod
     def create(cls, json_data):
         try:
             cls._validate(json_data)
             if len(json_data.keys()) != 4:
-                raise ValueError(json_data['courier_id'])   
+                raise ValueError(json_data['courier_id'])
         except KeyError:
             raise ValueError('no id field')
         except:
             raise ValueError(json_data['courier_id'])
-        
+
         try:
             working_hours = json_data['working_hours'][0]
             for i in json_data['working_hours'][1:]:
                 working_hours += ' '
                 working_hours += i
-            res = cls(id=json_data['courier_id'], working_hours=working_hours, courier_type=json_data['courier_type'])
+            res = cls(id=json_data['courier_id'], working_hours=working_hours,
+                      courier_type=json_data['courier_type'])
             for i in json_data['regions']:
                 r = Region.objects.get_or_create(id=i)
                 r[0].save()
@@ -67,7 +72,7 @@ class Courier(models.Model):
             print(e)
             raise ValueError(json_data['courier_id'])
         return res
-    
+
     @classmethod
     def _validate(cls, json_data):
         for key, value in json_data.items():
@@ -92,11 +97,11 @@ class Courier(models.Model):
                     raise ValueError('working_hours')
                 else:
                     for i in value:
-                        try: 
+                        try:
                             TimeInterval(i)
                         except:
                             raise ValueError('workig_hours')
-                    
+
             else:
                 raise ValueError('Unknown argument ' + key)
         return True
@@ -116,7 +121,8 @@ class Courier(models.Model):
         self._reassign_orders()
 
     def _reassign_orders(self):
-        orders = Order.objects.filter(courier=self, complete_time=None).order_by('weight')
+        orders = Order.objects.filter(
+            courier=self, complete_time=None).order_by('weight')
         w = 0.0
         for order in orders:
             if (w + order.weight <= self.get_maxweight() and
@@ -128,7 +134,7 @@ class Courier(models.Model):
                 order.courier = None
                 order.save()
                 self.current_unfinished_orders -= 1
-    
+
     def _intersection(self, delivery_hours):
         found = False
         for w_hours in self.get_working_hours():
@@ -146,16 +152,18 @@ class Courier(models.Model):
     def assign_orders(self):
         if self.current_unfinished_orders > 0:
             res = []
-            orders = Order.objects.filter(courier=self, complete_time=None).order_by('id')
+            orders = Order.objects.filter(
+                courier=self, complete_time=None).order_by('id')
             for i in orders:
                 res.append({'id': i.id})
             return res, orders[0].assign_time.isoformat(timespec='milliseconds')[:22] + 'Z'
         elif self.current_unfinished_orders < 0:
             raise ValueError('i don\'t know what happend')
-        orders = Order.objects.filter(region__in=self.regions.all(), courier=None).order_by('weight')
+        orders = Order.objects.filter(
+            region__in=self.regions.all(), courier=None).order_by('weight')
         w = 0.0
         res = []
-        assign_time = datetime.datetime.now(tz=datetime.timezone.utc)#NOW
+        assign_time = datetime.datetime.now(tz=datetime.timezone.utc)  # NOW
         for order in orders:
             if w + order.weight <= self.get_maxweight():
                 found = self._intersection(order.get_delivery_hours())
@@ -190,7 +198,8 @@ class Courier(models.Model):
 
     def get_rating(self):
         td = {}
-        orders = Order.objects.filter(courier=self, complete_time__isnull=False).order_by('assign_time', 'complete_time')
+        orders = Order.objects.filter(courier=self, complete_time__isnull=False).order_by(
+            'assign_time', 'complete_time')
         if orders.count() == 0:
             return 0
         curr_assign_time = 0
@@ -202,11 +211,13 @@ class Courier(models.Model):
                 td[order.region.id] = {'value': 0.0, 'count': 0}
             if order.assign_time == curr_assign_time:
                 td[order.region.id]['count'] += 1
-                td[order.region.id]['value'] += abs((order.complete_time - prev_complete_time).total_seconds())
+                td[order.region.id]['value'] += abs(
+                    (order.complete_time - prev_complete_time).total_seconds())
             else:
                 curr_assign_time = order.assign_time
                 td[order.region.id]['count'] += 1
-                td[order.region.id]['value'] += abs((order.complete_time - order.assign_time).total_seconds())
+                td[order.region.id]['value'] += abs(
+                    (order.complete_time - order.assign_time).total_seconds())
             prev_complete_time = order.complete_time
         tm = -1
         for i in td.values():
@@ -218,7 +229,7 @@ class Courier(models.Model):
         if self.current_unfinished_orders > 0:
             return self.delivery_count - 1
         else:
-            return self.delivery_count 
+            return self.delivery_count
 
     def get_earnings(self):
         return self.earning
@@ -240,7 +251,7 @@ class Order(models.Model):
             if len(json_data.keys()) != 4:
                 raise ValueError(json_data['order_id'])
         except KeyError:
-            raise ValueError('no id field')  
+            raise ValueError('no id field')
         except:
             raise ValueError(json_data['order_id'])
         try:
@@ -249,12 +260,13 @@ class Order(models.Model):
                 delivery_hours += ' '
                 delivery_hours += i
             Region.objects.get_or_create(id=json_data['region'])
-            res = cls(id=json_data['order_id'], delivery_hours=delivery_hours, weight=json_data['weight'], region_id=json_data['region'])
+            res = cls(id=json_data['order_id'], delivery_hours=delivery_hours,
+                      weight=json_data['weight'], region_id=json_data['region'])
             res.save()
         except:
             raise ValueError(json_data['order_id'])
         return res
-    
+
     @classmethod
     def _validate(cls, json_data):
         for key, value in json_data.items():
@@ -275,11 +287,11 @@ class Order(models.Model):
                     raise ValueError('delivery_hours')
                 else:
                     for i in value:
-                        try: 
+                        try:
                             TimeInterval(i)
                         except:
                             raise ValueError('delivery_hours')
-                    
+
             else:
                 raise ValueError('Unknown argument ' + key)
         return json_data
